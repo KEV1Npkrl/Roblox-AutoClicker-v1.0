@@ -1,0 +1,193 @@
+-- Auto Clicker Script for Roblox
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+-- GUI Creation
+local gui = Instance.new("ScreenGui")
+gui.Name = "AutoClickerGUI"
+gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 200, 0, 180)
+mainFrame.Position = UDim2.new(0.5, -100, 0.5, -90)
+mainFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = gui
+
+local title = Instance.new("TextLabel")
+title.Name = "Title"
+title.Size = UDim2.new(1, 0, 0, 30)
+title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Text = "Auto Clicker by @kevin.pkrl"
+title.TextSize = 18
+title.Font = Enum.Font.SourceSansBold
+title.Parent = mainFrame
+
+-- Speed Input
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Name = "SpeedLabel"
+speedLabel.Size = UDim2.new(0.5, 0, 0, 25)
+speedLabel.Position = UDim2.new(0, 10, 0, 40)
+speedLabel.BackgroundTransparency = 1
+speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedLabel.Text = "Click Speed:"
+speedLabel.TextSize = 14
+speedLabel.Font = Enum.Font.SourceSans
+speedLabel.Parent = mainFrame
+
+local speedInput = Instance.new("TextBox")
+speedInput.Name = "SpeedInput"
+speedInput.Size = UDim2.new(0.3, 0, 0, 25)
+speedInput.Position = UDim2.new(0.6, 0, 0, 40)
+speedInput.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+speedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedInput.Text = "1"
+speedInput.TextSize = 14
+speedInput.Font = Enum.Font.SourceSans
+speedInput.Parent = mainFrame
+
+-- Toggle Key Input
+local keyLabel = Instance.new("TextLabel")
+keyLabel.Name = "KeyLabel"
+keyLabel.Size = UDim2.new(0.5, 0, 0, 25)
+keyLabel.Position = UDim2.new(0, 10, 0, 75)
+keyLabel.BackgroundTransparency = 1
+keyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+keyLabel.Text = "Toggle Key:"
+keyLabel.TextSize = 14
+keyLabel.Font = Enum.Font.SourceSans
+keyLabel.Parent = mainFrame
+
+local keyInput = Instance.new("TextBox")
+keyInput.Name = "KeyInput"
+keyInput.Size = UDim2.new(0.3, 0, 0, 25)
+keyInput.Position = UDim2.new(0.6, 0, 0, 75)
+keyInput.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+keyInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+keyInput.Text = "T"
+keyInput.TextSize = 14
+keyInput.Font = Enum.Font.SourceSans
+keyInput.Parent = mainFrame
+
+-- Status Label
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Name = "StatusLabel"
+statusLabel.Size = UDim2.new(1, -20, 0, 25)
+statusLabel.Position = UDim2.new(0, 10, 0, 110)
+statusLabel.BackgroundTransparency = 1
+statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+statusLabel.Text = "Status: OFF"
+statusLabel.TextSize = 14
+statusLabel.Font = Enum.Font.SourceSansBold
+statusLabel.Parent = mainFrame
+
+-- Set Position Button
+local setPosButton = Instance.new("TextButton")
+setPosButton.Name = "SetPositionButton"
+setPosButton.Size = UDim2.new(1, -20, 0, 30)
+setPosButton.Position = UDim2.new(0, 10, 0, 140)
+setPosButton.BackgroundColor3 = Color3.fromRGB(60, 120, 60)
+setPosButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+setPosButton.Text = "Set Click Position"
+setPosButton.TextSize = 14
+setPosButton.Font = Enum.Font.SourceSansBold
+setPosButton.Parent = mainFrame
+
+-- Variables
+local isRunning = false
+local clickPosition = nil
+local settingPosition = false
+
+-- Functions
+local function updateStatus()
+    statusLabel.Text = "Status: " .. (isRunning and "ON" or "OFF")
+    statusLabel.TextColor3 = isRunning and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 255)
+end
+
+local function toggleAutoClicker()
+    isRunning = not isRunning
+    updateStatus()
+end
+
+local function performClick()
+    if clickPosition then
+        local virtualInput = game:GetService("VirtualInputManager")
+        virtualInput:SendMouseButtonEvent(clickPosition.X, clickPosition.Y, 0, true, game, 0)
+        wait(0.1)
+        virtualInput:SendMouseButtonEvent(clickPosition.X, clickPosition.Y, 0, false, game, 0)
+    end
+end
+
+-- Event Connections
+setPosButton.MouseButton1Click:Connect(function()
+    setPosButton.Text = "Click anywhere to set position..."
+    settingPosition = true
+    
+    local connection
+    connection = UserInputService.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            clickPosition = UserInputService:GetMouseLocation()
+            setPosButton.Text = "Set Click Position"
+            settingPosition = false
+            connection:Disconnect()
+        end
+    end)
+end)
+
+UserInputService.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Keyboard then
+        local keyPressed = string.upper(input.KeyCode.Name)
+        if keyPressed == string.upper(keyInput.Text) then
+            toggleAutoClicker()
+        end
+    end
+end)
+
+-- Main Loop
+RunService.Heartbeat:Connect(function()
+    if isRunning and not settingPosition and clickPosition then
+        local speed = tonumber(speedInput.Text) or 1
+        performClick()
+        wait(1/speed)
+    end
+end)
+
+-- Make the frame draggable
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+mainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
